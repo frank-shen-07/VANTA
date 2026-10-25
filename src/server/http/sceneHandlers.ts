@@ -2,6 +2,7 @@
 import { SceneGenerationRequestSchema, SceneGenerationResponseSchema, type SceneApiError, type SceneApiStatus } from "@/shared/ai/contract";
 import { readAIConfig } from "@/server/ai/config";
 import { runSceneGeneration } from "@/server/ai/generate";
+import { getConfiguredSceneLLM, type SceneLLM } from "@/server/ai/llm";
 
 export const MAX_BODY_BYTES = 256 * 1024;
 const RATE_LIMIT = 12;
@@ -67,7 +68,7 @@ export function handleStatus(): Response {
   return json(body);
 }
 
-export async function handleGenerate(request: Request): Promise<Response> {
+export async function handleGenerate(request: Request, getLLM: () => SceneLLM | null = getConfiguredSceneLLM): Promise<Response> {
   try {
     const wait = checkRateLimit(clientKey(request));
     if (wait > 0) return error("rate_limited", `Too many requests. Try again in ${wait}s.`, 429, wait);
@@ -87,7 +88,7 @@ export async function handleGenerate(request: Request): Promise<Response> {
         .join("; ");
       return error("invalid_request", message.slice(0, 300), 400);
     }
-    const response = runSceneGeneration(parsed.data);
+    const response = await runSceneGeneration(parsed.data, { llm: getLLM(), signal: request.signal });
     const checked = SceneGenerationResponseSchema.safeParse(response);
     if (!checked.success) return error("validation_failed", "The generated result failed validation.", 500);
     return json(checked.data);
