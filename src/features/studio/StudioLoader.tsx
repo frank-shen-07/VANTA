@@ -7,6 +7,7 @@
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import { installDebugHook } from "@/store/debug";
+import { useStudioShortcuts } from "./useStudioShortcuts";
 
 const Studio = dynamic(() => import("./Studio").then((m) => m.Studio), {
   ssr: false,
@@ -24,5 +25,6 @@ const Studio = dynamic(() => import("./Studio").then((m) => m.Studio), {
 
 export function StudioLoader() {
   useEffect(() => installDebugHook(), []);
+  useStudioShortcuts();
   return <Studio />;
 }
