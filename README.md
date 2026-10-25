@@ -4,18 +4,22 @@
 
 **Workflow:** choose music → generate a scene → watch it react → edit the visuals → export.
 
-## Features
+## Status
 
-- **Music:** upload or drag-and-drop MP3 and WAV files. Play, pause, restart, seek, adjust volume and mute. VANTA also supports microphone input and direct audio URLs that allow CORS. SoundCloud embeds play back only.
-- **Real audio analysis:** the Web Audio API extracts bass, mids, highs, energy, onsets and a 64-bin spectrum from whatever is playing. The source you hear is the source that drives the visuals. Sources that can only be played back are labelled, and VANTA never fakes reactivity for them.
-- **3D renderer:** built on Three.js and React Three Fiber, with six GPU layer types: particles, rings, shapes, tunnel, grid and spectrum. Atmosphere comes from gradient and nebula backgrounds, fog and lighting. Post-processing adds bloom, chromatic aberration, vignette and grain. Quality has three levels.
-- **Audio reactivity:** each layer can have mappings, such as bass → scale or highs → brightness, with amount, threshold and smoothing. A global sensitivity setting scales all of them. Audio can also shake the camera and pump the bloom.
-- **Node graph:** React Flow nodes (Audio Band → Multiply / Clamp / Smooth / Remap → Visual Parameter) that drive real visual parameters.
-- **AI scene generation:** describe a scene and VANTA builds it, or refine the current scene with targeted edits that keep your manual changes. The server uses Claude when `ANTHROPIC_API_KEY` is set. Without a key, a built-in offline generator takes over. Every AI result is validated against the shared Zod schema, and no generated code is ever executed.
-- **Editing:** a layers panel to add, remove, duplicate, reorder, show/hide and rename layers. A properties inspector exposes every layer property plus scene, environment and post-processing settings. Undo and redo are supported.
-- **Presets**, a **fullscreen presentation mode**, and **keyboard shortcuts**.
-- **Export:** record WebM video (MP4 where the browser supports it), including the audio when the source allows. You can also save a PNG still.
-- **Projects:** a browser project library with autosave, `.vanta.json` import and export, and share links.
+**Working (verified in headless Chrome against a production build):**
+- MP3/WAV upload, plus drag-and-drop. Non-audio files are rejected. Play, pause, seek, volume, mute and track replacement work.
+- Real Web Audio analysis: bass, mids, highs, energy, onsets and a 64-bin spectrum. It drives a per-layer mapping engine.
+- WebGL renderer with a GPU **particle** layer (6 distributions) that responds to the audio mappings.
+- WebM recording of the live canvas with an audio track, and PNG still export.
+- AI scene generation and targeted refinement through `/api/scene`, using the built-in offline heuristic generator. Validation, rate limiting and readable errors are in place.
+- Data-driven inspector covering every layer and scene property and the audio-mapping editor. Also: layers panel, presets, undo/redo, and autosave/restore.
+
+**Not finished yet:**
+- Rendering for the rings, shape, tunnel, grid and spectrum layers. Their data, inspector controls and AI support exist, but they draw nothing yet.
+- Background modes, fog, lights and post-processing.
+- The LLM call (Claude). `ANTHROPIC_API_KEY` is detected, but generation still uses the heuristic generator.
+- The node graph UI, the project library / ProjectMenu, share links, and file import/export.
+- Untested in a browser: microphone, URL and SoundCloud sources.
 
 ## Getting started
 
@@ -31,7 +35,7 @@ npm run dev                  # http://localhost:3000
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | No | Turns on Claude-powered scene generation and refinement. Without it, the offline heuristic generator is used. |
+| `ANTHROPIC_API_KEY` | No | Reserved for Claude-powered generation. It is detected, but the LLM call is not wired up yet. |
 | `VANTA_AI_MODEL` | No | Overrides the Claude model (default `claude-opus-5-5`). |
 | `VANTA_AI_EFFORT` | No | Overrides the model effort level (`low`, `medium`, …). |
 
