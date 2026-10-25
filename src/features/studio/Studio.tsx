@@ -4,7 +4,7 @@
  * Studio root. OWNERSHIP: Agent 1 (Frontend UI & 3D).
  * Mounts AudioEngineProvider, PersistenceBoot and AudioDropOverlay exactly once.
  */
-import { Eye, EyeOff, Redo2, Undo2 } from "lucide-react";
+import { Eye, EyeOff, Maximize2, Redo2, Undo2 } from "lucide-react";
 import { AudioDropOverlay } from "@/features/audio/components/AudioDropOverlay";
 import { AudioPlayerBar } from "@/features/audio/components/AudioPlayerBar";
 import { AudioEngineProvider } from "@/features/audio/AudioEngineProvider";
@@ -12,6 +12,8 @@ import { ExportMenu } from "@/features/export/components/ExportMenu";
 import { NodeGraphPanel } from "@/features/nodes/components/NodeGraphPanel";
 import { PersistenceBoot } from "@/features/persistence/PersistenceBoot";
 import { ProjectMenu } from "@/features/persistence/components/ProjectMenu";
+import { Inspector } from "./Inspector";
+import { PromptBar } from "./PromptBar";
 import { Viewport } from "@/features/renderer/Viewport";
 import { Button, SectionHeader, cx } from "@/components/ui/primitives";
 import { PRESETS } from "@/shared/scene/presets";
@@ -96,6 +98,7 @@ export function Studio() {
             onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
             className="h-7 w-48 rounded-md bg-transparent px-2 text-xs text-fg outline-none hover:bg-surface-3 focus:bg-surface-3"
           />
+          <PromptBar />
           <div className="ml-auto flex items-center gap-2">
             <ProjectMenu />
             <ExportMenu />
@@ -112,9 +115,25 @@ export function Studio() {
         </header>
         <div className="flex min-h-0 flex-1">
           <LayersPanel />
-          <main className="relative min-w-0 flex-1">
+          <main id="vanta-viewport" className="relative min-w-0 flex-1 bg-surface-0">
             <Viewport />
+            <Button
+              variant="secondary"
+              size="sm"
+              icon
+              aria-label="Fullscreen presentation"
+              title="Fullscreen presentation (F)"
+              className="absolute right-3 top-3 z-10"
+              onClick={() => {
+                const el = document.getElementById("vanta-viewport");
+                if (document.fullscreenElement) void document.exitFullscreen();
+                else void el?.requestFullscreen();
+              }}
+            >
+              <Maximize2 size={13} />
+            </Button>
           </main>
+          <Inspector />
         </div>
         {bottomPanel === "nodes" ? (
           <div className="h-[280px] shrink-0 border-t border-line bg-surface-1">
