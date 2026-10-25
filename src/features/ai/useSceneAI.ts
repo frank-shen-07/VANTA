@@ -20,6 +20,7 @@ import { AudioProfileSchema } from "@/shared/audio/contract";
 import { getAudioController } from "@/shared/runtime/registry";
 import { LIMITS } from "@/shared/scene/schema";
 import { useSceneStore } from "@/store/sceneStore";
+import { suggestStyles } from "./suggest";
 
 export type SceneAIStatus = "idle" | "pending" | "success" | "error";
 
@@ -49,13 +50,40 @@ interface AIState {
   error: string | null;
   lastResult: SceneAIResult | null;
   llmConfigured: boolean | null;
+  suggestions: StyleSuggestion[];
 }
 
-export const useSceneAIStore = create<AIState>()(() => ({ status: "idle", error: null, lastResult: null, llmConfigured: null }));
+export const useSceneAIStore = create<AIState>()(() => ({ status: "idle", error: null, lastResult: null, llmConfigured: null, suggestions: [] }));
+
+const SUGGESTION_INTERVAL_MS = 5000;
+let pollers = 0;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+function refreshSuggestions(): void {
+  const next = suggestStyles(currentAudioProfile());
+  const prev = useSceneAIStore.getState().suggestions;
+  const same = prev.length === next.length && prev.every((s, i) => s.id === next[i].id && s.reason === next[i].reason);
+  if (!same) useSceneAIStore.setState({ suggestions: next });
+}
+
+/** Ref-counted 5 s poll of the audio profile (never per frame). */
+function startSuggestionPolling(): () => void {
+  pollers++;
+  if (pollers === 1) {
+    refreshSuggestions();
+    pollTimer = setInterval(refreshSuggestions, SUGGESTION_INTERVAL_MS);
+  }
+  return () => {
+    pollers--;
+    if (pollers === 0 && pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  };
+}
 
 let inflight: AbortController | null = null;
 let statusRequested = false;
-const NO_SUGGESTIONS: StyleSuggestion[] = [];
 
 const FRIENDLY: Record<string, string> = {
   rate_limited: "You're sending prompts quickly — please wait a moment and try again.",
@@ -167,9 +195,10 @@ export function useSceneAI(): UseSceneAI {
   const error = useSceneAIStore((s) => s.error);
   const lastResult = useSceneAIStore((s) => s.lastResult);
   const llmConfigured = useSceneAIStore((s) => s.llmConfigured);
+  const suggestions = useSceneAIStore((s) => s.suggestions);
   useEffect(() => {
     loadStatus();
+    return startSuggestionPolling();
   }, []);
-  // TODO(agent3): audio-derived style suggestions (suggest.ts) not implemented yet.
-  return { status, error, lastResult, llmConfigured, generate, refine, cancel, suggestions: NO_SUGGESTIONS };
+  return { status, error, lastResult, llmConfigured, generate, refine, cancel, suggestions };
 }
