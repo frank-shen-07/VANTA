@@ -59,7 +59,7 @@ function makeBeatWav(seconds = 10, sampleRate = 44100) {
 }
 
 const wavPath = `${OUT}test-beat.wav`;
-writeFileSync(wavPath, makeBeatWav());
+writeFileSync(wavPath, makeBeatWav(40));
 const wavPath2 = `${OUT}test-beat-2.wav`;
 writeFileSync(wavPath2, makeBeatWav(6));
 const badPath = `${OUT}not-audio.txt`;
@@ -144,7 +144,7 @@ try {
     return out;
   });
   check("WAV plays (status playing, time advancing)", samples.status === "playing" && samples.time > 0.5, `status=${samples.status} t=${samples.time?.toFixed(2)} dur=${samples.duration}`);
-  check("metadata: duration ≈ 10 s, analysis available", Math.abs(samples.duration - 10) < 0.5 && samples.source?.analysis === "available", JSON.stringify(samples.source));
+  check("metadata: duration ≈ 40 s, analysis available", Math.abs(samples.duration - 40) < 0.5 && samples.source?.analysis === "available", JSON.stringify(samples.source));
   check("real analysis: bass responds to kick", samples.bass > 0.3, `max bass=${samples.bass.toFixed(3)}`);
   check("real analysis: highs respond to hats", samples.highs > 0.05, `max highs=${samples.highs.toFixed(3)}`);
   check("real analysis: onsets detected", samples.onset > 0.3, `max onset=${samples.onset.toFixed(3)}`);
@@ -241,15 +241,16 @@ try {
   check(`all ${presets.length} presets load without recreating the renderer or stopping audio`, presetCheck.same && presetCheck.status === "playing", JSON.stringify(presetCheck));
 
   /* ---------------- presentation mode ---------------- */
-  await page.evaluate(() => window.__VANTA__.editor.getState().setPresenting(true));
-  await page.waitForTimeout(800);
+  await page.click('[aria-label="Fullscreen presentation"]');
+  await page.waitForTimeout(1000);
   await page.screenshot({ path: `${OUT}05-presentation.png` });
   const pres = await page.evaluate(() => {
     const c = window.__VANTA__.getRenderer().getCanvas();
     const r = c.getBoundingClientRect();
     return { same: c === window.__canvas0, w: r.width, h: r.height, vw: innerWidth, vh: innerHeight, audio: window.__VANTA__.getAudioController().getState().status };
   });
-  await page.evaluate(() => window.__VANTA__.editor.getState().setPresenting(false));
+  await page.evaluate(() => document.fullscreenElement && document.exitFullscreen());
+  await page.waitForTimeout(500);
   check("presentation mode keeps the same canvas, fills the viewport, audio keeps playing", pres.same && pres.w >= pres.vw * 0.95 && pres.h >= pres.vh * 0.9 && pres.audio === "playing", JSON.stringify(pres));
 
   /* ---------------- video export ---------------- */
@@ -305,7 +306,8 @@ try {
 } catch (err) {
   check("smoke test ran to completion", false, err?.stack ?? String(err));
 } finally {
-  const relevant = consoleErrors.filter((e) => !/favicon|DevTools|Download the React DevTools/i.test(e));
+  // The deliberate malformed-request check logs one expected "400 (Bad Request)" resource error.
+  const relevant = consoleErrors.filter((e) => !/favicon|DevTools|Download the React DevTools|status of 400/i.test(e));
   check("no console/page errors", relevant.length === 0, relevant.slice(0, 8).join(" | "));
   writeFileSync(`${OUT}results.json`, JSON.stringify(results, null, 2));
   await browser.close();

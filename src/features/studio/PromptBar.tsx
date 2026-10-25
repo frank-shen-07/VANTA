@@ -1,7 +1,7 @@
 "use client";
 
 /** AI prompt input for generating / refining scenes. Written by the lead orchestrator during integration. */
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { useSceneAI } from "@/features/ai/useSceneAI";
 import { Badge, Button, cx } from "@/components/ui/primitives";
@@ -12,6 +12,9 @@ export function PromptBar() {
   const hasLayers = useSceneStore((s) => s.scene.layers.length > 0);
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<"refine" | "generate">("generate");
+  // The toast shows the latest result/error until the user dismisses it.
+  const [dismissed, setDismissed] = useState<unknown>(null);
+  const feedback = ai.error ?? ai.lastResult;
   const effectiveMode = hasLayers ? mode : "generate";
   const pending = ai.status === "pending";
   const submit = () => {
@@ -55,12 +58,15 @@ export function PromptBar() {
           Generate
         </Button>
       )}
-      {ai.error || ai.lastResult ? (
+      {feedback && feedback !== dismissed && !pending ? (
         <div className={cx("absolute left-0 top-full z-40 mt-2 flex max-w-xl items-start gap-2 rounded-lg bg-surface-2/95 px-3 py-2 text-[11px] shadow-[var(--shadow-pop)]", ai.error ? "text-danger" : "text-fg-muted")}>
           <span className="min-w-0 flex-1">
             {ai.error ?? ai.lastResult?.summary}
             {!ai.error && ai.lastResult?.warnings.length ? <span className="text-fg-faint"> · {ai.lastResult.warnings.length} adjustments</span> : null}
           </span>
+          <button type="button" aria-label="Dismiss" className="text-fg-faint hover:text-fg" onClick={() => setDismissed(feedback)}>
+            <X size={12} />
+          </button>
         </div>
       ) : null}
       {ai.suggestions.length > 0 && !prompt ? (
