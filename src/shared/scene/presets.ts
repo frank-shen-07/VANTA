@@ -108,8 +108,9 @@ export const PRESETS: readonly PresetDefinition[] = [
         layers: [
           createLayer("shape", {
             name: "Crystal",
-            shape: { geometry: "icosahedron", detail: 1, color: "#140f2b", emissive: "#7c3aed", distortion: 0.35 },
+            shape: { geometry: "icosahedron", detail: 1, color: "#2a2250", emissive: "#5b21b6", metalness: 0.75, roughness: 0.22, distortion: 0.35 },
             transform: { scale: 2.2 },
+            glow: 0.35,
             reactivity: [m({ source: "bass", target: "scale", amount: 0.35 }), m({ source: "mids", target: "displacement", amount: 0.8 })],
           }),
           createLayer("shape", {

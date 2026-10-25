@@ -12,9 +12,10 @@ import { ToneMappingMode, type BloomEffect } from "postprocessing";
 import { memo, useEffect, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 import { computeModulation, liveModulation } from "@/shared/modulation/engine";
-import { RENDER_QUALITY_SETTINGS, type RendererHandle, type RendererStats } from "@/shared/render/contract";
+import { Button, Select } from "@/components/ui/primitives";
+import { RENDER_QUALITY_SETTINGS, type RenderQuality, type RendererHandle, type RendererStats } from "@/shared/render/contract";
 import { audioBus } from "@/shared/runtime/audioBus";
-import { registerRenderer } from "@/shared/runtime/registry";
+import { getRenderer, registerRenderer } from "@/shared/runtime/registry";
 import type { Layer } from "@/shared/scene/schema";
 import { useEditorStore } from "@/store/editorStore";
 import { getSceneSnapshot, useSceneStore } from "@/store/sceneStore";
@@ -32,19 +33,23 @@ function ModulationDriver() {
 function RendererBridge() {
   const get = useThree((s) => s.get);
   const stats = useRef<RendererStats>({ fps: 0, frameMs: 0, drawCalls: 0, triangles: 0, points: 0, width: 0, height: 0, dpr: 1 });
+  // Runs first each frame: read the previous frame's totals (all passes), then reset.
   useFrame((state, delta) => {
     const s = stats.current;
+    const info = state.gl.info;
     s.frameMs = s.frameMs * 0.9 + delta * 1000 * 0.1;
     s.fps = s.frameMs > 0 ? 1000 / s.frameMs : 0;
-    s.drawCalls = state.gl.info.render.calls;
-    s.triangles = state.gl.info.render.triangles;
-    s.points = state.gl.info.render.points;
+    s.drawCalls = info.render.calls;
+    s.triangles = info.render.triangles;
+    s.points = info.render.points;
     s.width = state.size.width;
     s.height = state.size.height;
     s.dpr = state.viewport.dpr;
-  });
+    info.reset();
+  }, -3);
   useEffect(() => {
     const { gl } = get();
+    gl.info.autoReset = false;
     const canvas = gl.domElement;
     const setStatus = useEditorStore.getState().setRendererStatus;
     setStatus("ready");
@@ -224,6 +229,45 @@ function SceneContent() {
   );
 }
 
+const QUALITY_OPTIONS = (Object.keys(RENDER_QUALITY_SETTINGS) as RenderQuality[]).map((q) => ({ value: q, label: RENDER_QUALITY_SETTINGS[q].label }));
+
+/** Quality selector + optional stats readout (DOM text updated ~4x/s, no React state per frame). */
+function ViewportHud() {
+  const quality = useEditorStore((s) => s.quality);
+  const setQuality = useEditorStore((s) => s.setQuality);
+  const showStats = useEditorStore((s) => s.showStats);
+  const toggleStats = useEditorStore((s) => s.toggleStats);
+  const statsRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!showStats) return;
+    let raf = 0;
+    let last = 0;
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick);
+      if (now - last < 250) return;
+      last = now;
+      const r = getRenderer();
+      const el = statsRef.current;
+      if (!r || !el) return;
+      const s = r.getStats();
+      el.textContent = `${s.fps.toFixed(0)} fps · ${s.frameMs.toFixed(1)} ms · ${s.drawCalls} calls · ${(s.triangles / 1000).toFixed(1)}k tris · ${(s.points / 1000).toFixed(1)}k pts · ${s.width}×${s.height} @${s.dpr.toFixed(2)}x`;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [showStats]);
+  return (
+    <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
+      <div className="pointer-events-auto flex items-center gap-1 rounded-lg bg-surface-1/80 p-1 ring-1 ring-line backdrop-blur">
+        <Select value={quality} options={QUALITY_OPTIONS} onChange={setQuality} className="h-6 text-[11px]" />
+        <Button variant="ghost" size="xs" active={showStats} onClick={toggleStats} aria-pressed={showStats} title="Show renderer stats">
+          Stats
+        </Button>
+      </div>
+      {showStats ? <span ref={statsRef} className="rounded-md bg-surface-1/80 px-2 py-1 font-mono text-[10px] tabular-nums text-fg-muted ring-1 ring-line backdrop-blur" /> : null}
+    </div>
+  );
+}
+
 export function Viewport() {
   const quality = useEditorStore((s) => s.quality);
   const status = useEditorStore((s) => s.rendererStatus);
@@ -241,6 +285,7 @@ export function Viewport() {
       >
         <SceneContent />
       </Canvas>
+      <ViewportHud />
       {status === "context-lost" || status === "unsupported" || status === "error" ? (
         <div className="absolute inset-0 flex items-center justify-center bg-surface-0/80 text-sm text-fg-muted">
           {status === "context-lost" ? "WebGL context lost — waiting for the GPU to recover…" : "WebGL is unavailable in this browser."}
