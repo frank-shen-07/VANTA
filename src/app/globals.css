@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/*
+ * VANTA design tokens. Agent 1 owns visual refinement of this file; keep the
+ * token names stable because every feature area uses them.
+ *   surfaces: near-black app background → charcoal panels
+ *   accents:  violet (primary actions, selection) + cyan (audio / live signals)
+ */
+@theme {
+  --color-surface-0: #060609;
+  --color-surface-1: #0d0d12;
+  --color-surface-2: #14141b;
+  --color-surface-3: #1c1c25;
+  --color-surface-4: #262632;
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-strong: rgb(255 255 255 / 0.13);
+  --color-fg: #ececf2;
+  --color-fg-muted: #9b9bab;
+  --color-fg-faint: #636372;
+  --color-violet: #8b5cf6;
+  --color-violet-soft: #a78bfa;
+  --color-violet-deep: #5b21b6;
+  --color-cyan: #22d3ee;
+  --color-cyan-soft: #67e8f9;
+  --color-danger: #f43f5e;
+  --color-warning: #fbbf24;
+  --color-success: #34d399;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --radius-panel: 10px;
+  --shadow-pop: 0 18px 50px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-surface-0);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-4) transparent;
+}
+
+::selection {
+  background: rgb(139 92 246 / 0.4);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-violet);
+  outline-offset: 1px;
+}
+
+/* Range inputs used by <Slider/> */
+input[type="range"].vanta-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 16px;
+  cursor: pointer;
+}
+input[type="range"].vanta-range::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-violet) 0%,
+    var(--color-violet) var(--fill, 0%),
+    var(--color-surface-4) var(--fill, 0%)
+  );
+}
+input[type="range"].vanta-range::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-surface-4);
+}
+input[type="range"].vanta-range::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-violet);
+}
+input[type="range"].vanta-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -5px;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--color-fg);
+  border: 2px solid var(--color-violet);
+  box-shadow: 0 0 0 3px rgb(139 92 246 / 0.15);
+}
+input[type="range"].vanta-range::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--color-fg);
+  border: 2px solid var(--color-violet);
+}
+input[type="range"].vanta-range:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+input[type="color"].vanta-color {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="color"].vanta-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type="color"].vanta-color::-webkit-color-swatch {
+  border: 1px solid var(--color-line-strong);
+  border-radius: 5px;
+}
+input[type="color"].vanta-color::-moz-color-swatch {
+  border: 1px solid var(--color-line-strong);
+  border-radius: 5px;
+}
