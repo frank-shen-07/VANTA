@@ -6,20 +6,29 @@
 
 ## Status
 
-**Working (verified in headless Chrome against a production build):**
-- MP3/WAV upload, plus drag-and-drop. Non-audio files are rejected. Play, pause, seek, volume, mute and track replacement work.
-- Real Web Audio analysis: bass, mids, highs, energy, onsets and a 64-bin spectrum. It drives a per-layer mapping engine.
-- WebGL renderer with a GPU **particle** layer (6 distributions) that responds to the audio mappings.
-- WebM recording of the live canvas with an audio track, and PNG still export.
-- AI scene generation and targeted refinement through `/api/scene`, using the built-in offline heuristic generator. Validation, rate limiting and readable errors are in place.
-- Data-driven inspector covering every layer and scene property and the audio-mapping editor. Also: layers panel, presets, undo/redo, and autosave/restore.
+**Verified in headless Chrome** against a production build (`npm run e2e`, 25/25 checks):
+- MP3/WAV upload; non-audio files are rejected.
+- Playback with pause, seek, volume, mute and track replacement.
+- Real Web Audio analysis (bass, mids, highs, energy, onsets, spectrum) driving the visuals.
+- Six GPU layer types (particles, rings, shape, tunnel, grid, spectrum) with backgrounds, fog, lights and post-processing.
+- Layer edits and visibility changes show up in the rendered frame.
+- AI generate and refine through `/api/scene`; refinement keeps manual edits.
+- All presets.
+- Fullscreen presentation that keeps the same canvas with audio still playing.
+- Two WebM recordings in a row, with audio and changing frames, plus PNG stills.
+- Autosave and restore after a reload.
 
-**Not finished yet:**
-- Rendering for the rings, shape, tunnel, grid and spectrum layers. Their data, inspector controls and AI support exist, but they draw nothing yet.
-- Background modes, fog, lights and post-processing.
-- The LLM call (Claude). `ANTHROPIC_API_KEY` is detected, but generation still uses the heuristic generator.
-- The node graph UI, the project library / ProjectMenu, share links, and file import/export.
-- Untested in a browser: microphone, URL and SoundCloud sources.
+**Built and unit-tested, not exercised end to end:**
+- The Claude call. It was only tested with a mocked client; no API key was available. Without a key, the offline heuristic generator is used.
+- The project library, `.vanta.json` import/export and share links.
+- The node graph editor. Only adding nodes was checked in a browser.
+- Microphone, direct-URL (CORS fallback) and SoundCloud sources.
+
+**Known limitations:**
+- The API rate limit is in memory and keyed on `x-forwarded-for`, which a client can spoof.
+- Recorded WebM files have no duration header.
+- Thin rings seen edge-on show aliasing.
+- The selected layer isn't highlighted in the viewport.
 
 ## Getting started
 
@@ -35,7 +44,7 @@ npm run dev                  # http://localhost:3000
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | No | Reserved for Claude-powered generation. It is detected, but the LLM call is not wired up yet. |
+| `ANTHROPIC_API_KEY` | No | Turns on Claude scene generation and refinement (falls back to the offline generator on any error). |
 | `VANTA_AI_MODEL` | No | Overrides the Claude model (default `claude-opus-5-5`). |
 | `VANTA_AI_EFFORT` | No | Overrides the model effort level (`low`, `medium`, …). |
 
