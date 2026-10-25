@@ -486,7 +486,8 @@ function layerColors(layer: Layer): Record<string, string> {
 function targetLayers(scene: SceneConfig, words: WordSet, selectedLayerId: string | null | undefined): { layers: Layer[]; explicit: boolean } {
   const byType = scene.layers.filter((l) => words.has(...LAYER_WORDS[l.type].filter((w) => !["core", "sun", "moon", "cloud", "drop"].includes(w))));
   const byName = scene.layers.filter((l) => l.name.toLowerCase().split(/\s+/).some((w) => w.length >= 4 && words.has(w)));
-  const explicit = [...new Set([...byType, ...byName])];
+  // An explicit type ("the rings") wins over incidental name matches ("Glow Particles" for "more glow").
+  const explicit = byType.length > 0 ? byType : byName;
   if (explicit.length > 0) return { layers: explicit, explicit: true };
   if (words.has("everything", "all", "scene", "whole", "entire", "overall")) return { layers: scene.layers, explicit: false };
   const selected = scene.layers.find((l) => l.id === selectedLayerId);
