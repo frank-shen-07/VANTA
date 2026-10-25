@@ -245,3 +245,19 @@ describe("JSON Schema export for LLMs", () => {
     expect(json.properties.layers).toBeDefined();
   });
 });
+
+describe("cross-contract consistency", () => {
+  it("mapping sources are exactly the AudioFeatures keys", async () => {
+    const { AUDIO_BANDS } = await import("@/shared/scene/schema");
+    const { AUDIO_FEATURE_KEYS, createSilentFeatures } = await import("@/shared/audio/contract");
+    expect([...AUDIO_BANDS].sort()).toEqual([...AUDIO_FEATURE_KEYS].sort());
+    expect(Object.keys(createSilentFeatures()).sort()).toEqual([...AUDIO_BANDS].sort());
+  });
+
+  it("every layer type has a renderer-facing registry entry with at least one mapping target", () => {
+    for (const type of LAYER_TYPES) {
+      expect(LAYER_TYPE_INFO[type].type).toBe(type);
+      expect(LAYER_TYPE_INFO[type].targets.length).toBeGreaterThan(0);
+    }
+  });
+});

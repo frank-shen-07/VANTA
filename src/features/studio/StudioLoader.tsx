@@ -5,6 +5,8 @@
  * WebGL, Web Audio and browser storage, so it is never server-rendered.
  */
 import dynamic from "next/dynamic";
+import { useEffect } from "react";
+import { installDebugHook } from "@/store/debug";
 
 const Studio = dynamic(() => import("./Studio").then((m) => m.Studio), {
   ssr: false,
@@ -21,5 +23,6 @@ const Studio = dynamic(() => import("./Studio").then((m) => m.Studio), {
 });
 
 export function StudioLoader() {
+  useEffect(() => installDebugHook(), []);
   return <Studio />;
 }
