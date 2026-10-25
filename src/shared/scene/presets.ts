@@ -212,7 +212,7 @@ export const PRESETS: readonly PresetDefinition[] = [
         origin: "preset",
         environment: {
           background: { mode: "gradient", colorA: "#020203", colorB: "#0c0c10" },
-          lighting: { ambient: 0.2, key: 2.4, keyColor: "#ffffff", rimColor: "#8b5cf6" },
+          lighting: { ambient: 0.45, key: 3.6, keyColor: "#ffffff", rimColor: "#8b5cf6" },
           camera: { distance: 11, autoRotateSpeed: 0.15, shake: 0.05 },
         },
         post: { bloom: { intensity: 0.7, threshold: 0.4, audioBoost: 0.4 }, chromaticAberration: 0.05, vignette: 0.7, noise: 0.15 },
@@ -220,9 +220,9 @@ export const PRESETS: readonly PresetDefinition[] = [
           createLayer("shape", {
             name: "Knot",
             blending: "normal",
-            shape: { geometry: "torusKnot", detail: 3, color: "#1f2027", emissive: "#2e1065", metalness: 0.95, roughness: 0.18, flatShading: false, distortion: 0.1 },
+            shape: { geometry: "torusKnot", detail: 3, color: "#3a3b46", emissive: "#3b1590", metalness: 0.7, roughness: 0.3, flatShading: false, distortion: 0.1 },
             transform: { scale: 1.8 },
-            glow: 0.4,
+            glow: 0.7,
             reactivity: [m({ source: "bass", target: "scale", amount: 0.2 }), m({ source: "energy", target: "rotation", amount: 0.4 })],
           }),
           createLayer("particles", {

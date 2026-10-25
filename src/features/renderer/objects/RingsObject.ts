@@ -23,6 +23,7 @@ attribute float aIndex;
 varying vec3 vColor;
 varying float vEdge;
 varying float vFade;
+varying float vThin;
 #include <fog_pars_vertex>
 ${HUE_SHIFT_GLSL}
 mat3 vRotX(float a) { float c = cos(a); float s = sin(a); return mat3(1.0, 0.0, 0.0, 0.0, c, s, 0.0, -s, c); }
@@ -51,7 +52,13 @@ void main() {
     R = vRotY(i * 2.39996 + uTime * 0.35) * vRotX(t01 * 3.14159 + uTime * 0.2);
   }
   float wave = uWave * r * (0.08 * sin(ang * 3.0 + uTime * 2.0 + i * 0.7) + 0.05 * sin(uTime * 1.3 + i * 0.9));
-  float rr = max(0.0, r + wave) + aRing.y * uThickness * 0.5;
+  float rc = max(0.0, r + wave);
+  // Keep very thin rings at least ~1.5px wide so they do not break into dashes.
+  vec4 mvCenter = modelViewMatrix * vec4(center + R * vec3(cos(ang) * rc, sin(ang) * rc, 0.0), 1.0);
+  float minThickness = max(0.0, -mvCenter.z) * 0.0035;
+  float thick = max(uThickness, minThickness);
+  vThin = uThickness / max(thick, 1e-5);
+  float rr = rc + aRing.y * thick * 0.5;
   vec3 p = center + R * vec3(cos(ang) * rr, sin(ang) * rr, 0.0);
   vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mvPosition;
@@ -69,12 +76,13 @@ uniform float uAdditive;
 varying vec3 vColor;
 varying float vEdge;
 varying float vFade;
+varying float vThin;
 #include <fog_pars_fragment>
 
 void main() {
   float prof = 1.0 - pow(abs(vEdge), 3.0);
   vec3 outColor = vColor * (0.4 + uGlow);
-  float outAlpha = prof * vFade * uOpacity;
+  float outAlpha = prof * vFade * uOpacity * clamp(0.35 + 0.65 * vThin, 0.0, 1.0);
   ${FOG_APPLY_GLSL}
   gl_FragColor = vec4(outColor, outAlpha);
   #include <tonemapping_fragment>

@@ -115,7 +115,7 @@ export function generateParticles(distribution: ParticleDistribution, count: num
         const t = Math.pow(rand(), 0.75);
         const r = spread * t;
         const a = t * Math.PI * 2.4 + (arm / arms) * TAU;
-        const scatter = spread * (0.04 + 0.11 * t);
+        const scatter = spread * (0.02 + 0.06 * t);
         x = r * Math.cos(a) + gaussian() * scatter;
         z = r * Math.sin(a) + gaussian() * scatter;
         y = gaussian() * spread * 0.035 * (1.2 - t);
